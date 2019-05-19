@@ -29,33 +29,34 @@ var Sala = mg.model("Sala", salasSchema);
 var Computador = mg.model("Computador", computadoresSchema);
 var Switch = mg.model("Switch", switchesSchema);
 
+var f301 = new Sala({
+        nome: 'f301'
+})
 
+var switch1 = new Switch({
+    ip_addr: '192.168.1.100',
+    mac_addr: 'oi'
+})
 
+var pc1 = new Computador({
+        sala: f301['_id'],
+        numero: 1,
+        ip_addr: '192.168.0.100',
+        mac_addr: 'sl',
+        switch: switch1['_id'],
+        porta_switch: 1
+})
 
-//Recebe um ip e verifica se o pc é um pc de professor, retornando o nome da sala correspondente, NULL se não for pc_prof
-function verify_PCProf(ip){
-        var qual_sala = Computador.findOne({
-                ip_addr: ip
-        }).select('sala').exec(function(err, record){
-                if(err) console.error(err);
-                if(record != null){
-                        var eh_pcprof = Sala.findOne({
-                                _id: record['sala']
-                        }).select('nome').exec(function(err, record){
-                                if(err) console.error(err);
-                                console.log(record['nome']);
-                               return record;
-                       });
-                }
-        });
+f301['pc_prof'] = pc1['_id'];
 
-        return null;
-}
+f301.save(function (err, a) {
+    if (err) return console.error(err);
+});
 
-function main(){
-        verify_PCProf('192.168.0.100');
-}
+pc1.save(function (err, a) {
+    if (err) return console.error(err);
+});
 
-main();
-
-
+switch1.save(function (err, a) {
+    if (err) return console.error(err);
+});
