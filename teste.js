@@ -34,26 +34,92 @@ var Switch = mg.model("Switch", switchesSchema);
 
 //Recebe um ip e verifica se o pc é um pc de professor, retornando o nome da sala correspondente, NULL se não for pc_prof
 function verify_PCProf(ip){
-        var qual_sala = Computador.findOne({
+        return Computador.findOne({
                 ip_addr: ip
-        }).select('sala').exec(function(err, record){
-                if(err) console.error(err);
+        }).select('sala').exec().then(function(record){
+                // if(err) console.error(err);
                 if(record != null){
-                        var eh_pcprof = Sala.findOne({
+                        return Sala.findOne({
                                 _id: record['sala']
-                        }).select('nome').exec(function(err, record){
-                                if(err) console.error(err);
-                                console.log(record['nome']);
-                               return record;
-                       });
+                        }).select('nome').exec().then(function(record){
+                                // console.log(record['nome']);
+                                return new Promise(function(resolve, reject){
+                                        resolve(record);
+                                });
+                        });
                 }
+                
         });
-
-        return null;
 }
 
+
 function main(){
-        verify_PCProf('192.168.0.100');
+        var http = require('http');
+
+        var fs = require('fs');
+        
+        var express = require('express'); 
+
+        var server = express();
+
+        // var server = https.createServer(function(req, res){
+        //         // console.log('request was made ' + req.connection.remoteAddress);
+        //         var pcprof = verify_PCProf(req.connection.remoteAddress);
+        //         // console.log(sala['nome']);
+        //         pcprof.then(function(sala){
+        //                 if(result == null){
+        //                         //Não autorizado
+        //                         res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
+        //                         // var myReadStream = fs.createReadStream(__dirname + '/temp.txt', 'utf-8');
+        //                         // myReadStream.pipe(res);
+        //                         res.end("Não autorizado");
+        //                 } 
+        //                 else{
+        //                         //Autorizado
+        //                         res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
+        //                         res.end("You did it, champ! Sua sala é " + sala['nome']);
+        //                 } 
+        //         }, function(err){
+        //                 console.error(err);
+        //         });
+        // });
+
+        server.use(function(req, res, next){
+                res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
+                next();
+        })
+
+        //Verifica se o pc fazendo o request é um pc professor
+        server.get('/', function(req, res){
+                var pcprof = verify_PCProf(req.ip);
+                // console.log(sala['nome']);
+                pcprof.then(function(sala){
+                        if(sala == null){
+                                //Não autorizado
+                                // res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
+                                // var myReadStream = fs.createReadStream(__dirname + '/temp.txt', 'utf-8');
+                                // myReadStream.pipe(res);
+                                res.end("Não autorizado");
+                        } 
+                        else{
+                                //Autorizado
+                                // res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
+                                res.end("You did it, champ! Sua sala é " + sala['nome']);
+                        } 
+                }).catch(function(err){
+                        console.error(err);
+                });
+        })
+
+        //Fazer outras páginas, com HTML
+
+
+        server.get('*', function(req, res){
+                res.end('404!');
+        })
+
+        http.createServer(server).listen(3000, 'localhost');
+        console.log('Listening!');
 }
 
 main();
