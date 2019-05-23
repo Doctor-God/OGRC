@@ -23,6 +23,9 @@ var switchesSchema = new mg.Schema(
     {
         ip_addr: {type: String, required: true, unique: true},
         mac_addr: {type: String, required: true, unique: true},
+
+        chave_pub: {type: String, required: true},
+        chave_priv: {type: String, required: true}
 })
 
 var Sala = mg.model("Sala", salasSchema);
@@ -34,14 +37,18 @@ var f301 = new Sala({
 })
 
 var switch1 = new Switch({
-    ip_addr: '192.168.1.100',
-    mac_addr: 'oi'
+    ip_addr: '10.90.90.90',
+    mac_addr: 'oi',
+
+    chave_pub: 'public',
+    chave_priv: 'private'
+
 })
 
 var pc1 = new Computador({
         sala: f301['_id'],
         numero: 1,
-        ip_addr: '192.168.0.100',
+        ip_addr: '10.0.0.69',
         mac_addr: 'sl',
         switch: switch1['_id'],
         porta_switch: 1

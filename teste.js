@@ -53,6 +53,17 @@ function verify_PCProf(ip){
 }
 
 
+function requireLogin(req, res, next) {
+        if (sess.email) {
+                next(); // allow the next route to run
+        } 
+        else {
+                // require the user to log in
+                res.redirect("/login"); // or render a form, etc.
+        }
+}
+
+
 function main(){
         var http = require('http');
 
@@ -61,28 +72,13 @@ function main(){
         var express = require('express'); 
 
         var server = express();
+        var session = require('express-session');
+        server.use(session({secret: 'ssshhhhh'}));
 
-        // var server = https.createServer(function(req, res){
-        //         // console.log('request was made ' + req.connection.remoteAddress);
-        //         var pcprof = verify_PCProf(req.connection.remoteAddress);
-        //         // console.log(sala['nome']);
-        //         pcprof.then(function(sala){
-        //                 if(result == null){
-        //                         //Não autorizado
-        //                         res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
-        //                         // var myReadStream = fs.createReadStream(__dirname + '/temp.txt', 'utf-8');
-        //                         // myReadStream.pipe(res);
-        //                         res.end("Não autorizado");
-        //                 } 
-        //                 else{
-        //                         //Autorizado
-        //                         res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
-        //                         res.end("You did it, champ! Sua sala é " + sala['nome']);
-        //                 } 
-        //         }, function(err){
-        //                 console.error(err);
-        //         });
-        // });
+        
+        var sess; //Não pode ficar como global, mas por enquanto ok
+        var sala_atual; //Também só para teste, teria que colocar isso na session de alguma forma
+
 
         server.use(function(req, res, next){
                 res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
@@ -91,6 +87,7 @@ function main(){
 
         //Verifica se o pc fazendo o request é um pc professor
         server.get('/', function(req, res){
+                sess = req.session;
                 var pcprof = verify_PCProf(req.ip);
                 // console.log(sala['nome']);
                 pcprof.then(function(sala){
@@ -99,20 +96,36 @@ function main(){
                                 // res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
                                 // var myReadStream = fs.createReadStream(__dirname + '/temp.txt', 'utf-8');
                                 // myReadStream.pipe(res);
-                                res.end("Não autorizado");
+                                // res.end("Não autorizado");
                         } 
                         else{
                                 //Autorizado
                                 // res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
                                 res.end("You did it, champ! Sua sala é " + sala['nome']);
+                                sala_atual = sala;
+                                res.redirect('/login')
                         } 
                 }).catch(function(err){
                         console.error(err);
                 });
         })
 
-        //Fazer outras páginas, com HTML
+        //Enquanto não tem front-end (*cof*Leo*cof*) fica assim mesmo
+        server.get('/login', function(req, res){
+                sess = req.session;
+                sess.email = 'fioresi_mito@valzitos.wtf';
+                res.redirect('/menu');
+        })
 
+        //Fazer outras páginas, com HTML
+        server.all("/menu/*", requireLogin, function(req, res, next) {
+                next(); // if the middleware allowed us to get here,
+                        // just move on to the next route handler
+        })
+
+        server.get('/menu', function(req, res){
+                res.end("Só testando");
+        })
 
         server.get('*', function(req, res){
                 res.end('404!');
@@ -121,6 +134,8 @@ function main(){
         http.createServer(server).listen(3000, 'localhost');
         console.log('Listening!');
 }
+
+//ip a add [ip que eu quero]/8 dev enp2s0 
 
 main();
 
